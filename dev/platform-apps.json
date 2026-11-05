@@ -1,0 +1,9 @@
+[
+  {
+    "id": "index",
+    "label": "Index",
+    "entry": "/apps/index/embed.js",
+    "apiBase": "/api/index",
+    "roles": []
+  }
+]

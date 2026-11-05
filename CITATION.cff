@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: ediarum.index
+abstract: "ediarum.index manages the authority registers (persons, places, groups, organisations, works, bible books, glossary entries) of ediarum editions as an app of ediarum.platform. Entries are stored in MariaDB, browsed and edited in a web interface, ingested from and exported back to the projects' TEI XML registers."
+type: software
+authors:
+  - family-names: Lampert
+    given-names: Marcus
+  - family-names: Schenke
+    given-names: Felix
+  - family-names: Vogl
+    given-names: Malte
+version: 0.2.0
+date-released: "2026-11-05"
+license: "AGPL-3.0-or-later"
+url: "https://www.ediarum.org"

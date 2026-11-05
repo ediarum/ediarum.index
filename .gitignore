@@ -1,0 +1,58 @@
+## Ignore environ or dot env files
+.env
+env
+
+## Do not commit db
+database.db
+*mariadb
+*testdata
+
+## Local stand-in for the shared XML volume (XML_MOUNT_ROOT=./xml): one
+## checkout per project slug, as ediarum.fileservice keeps it — never tracked
+/xml
+
+## Python ignores
+**__pycache__
+**ipynb_checkpoints
+.pytest_cache
+.coverage
+htmlcov
+
+## Test artifacts
+/roundtrip-diffs
+/roundtrip-diffs-*
+/export-dump-*
+junit.xml
+.venv
+/frontend/coverage
+/export-*.xml
+
+## VUE JS ignores
+.DS_Store
+node_modules
+/dist
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.claude
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+/certs
+
+# documentation site builds (mkdocs)
+/site/
+/public/

@@ -1,0 +1,34 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+@use 'vuetify/settings' with (
+  $color-pack: false,
+  // Kept off: enabling it makes Vuetify 4's SASS theme-utility layers conflict
+  // with the runtime theme sheet, and `<v-app-bar color="primary">` loses its
+  // background. App-bar layout is done with scoped CSS in App.vue instead.
+  $utilities: false,
+
+  // the platform's design (--ep-radius, --ep-font): the app inherits its
+  // font and matches its corners — see docs/concepts/ui-design.md
+  $border-radius-root: 6px,
+
+  $heading-font-family: var(--font-body),
+  $body-font-family: var(--font-body),
+  $grid-breakpoints: (
+    'xs': 0,
+    'sm': 600px,
+    'md': 840px,
+    'lg': 1145px,
+    'xl': 1545px,
+    'xxl': 2138px,
+  ),
+  $container-max-widths: (
+    'md': 700px,
+    'lg': 1000px,
+    'xl': 1400px,
+    'xxl': 2000px,
+  )
+);

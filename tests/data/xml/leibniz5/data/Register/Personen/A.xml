@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A tiny stand-in for a project's register on the shared XML volume
+     (XML_MOUNT_ROOT=tests/data/xml), used by scripts/migration-test.sh. -->
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <listPerson>
+        <person xml:id="L0001">
+          <persName type="reg"><surname>Arnauld</surname><forename>Antoine</forename></persName>
+          <birth>1612</birth>
+          <death>1694</death>
+        </person>
+        <person xml:id="L0002">
+          <persName type="reg"><surname>Bayle</surname><forename>Pierre</forename></persName>
+          <birth>1647</birth>
+          <death>1706</death>
+        </person>
+      </listPerson>
+    </body>
+  </text>
+</TEI>

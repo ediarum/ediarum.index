@@ -1,0 +1,72 @@
+# ediarum.index in Docker on your machine, with a MariaDB container and the
+# ediarum.platform's `npm run dev` (its mock login) — Linux only.
+#
+#   docker compose -p ediarum-index-dev -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# - database: MariaDB on 127.0.0.1:${DEV_DB_PORT:-3306}, from the MYSQL_* keys
+#   in .env (data in the `mariadb_data` volume of this project)
+# - api: on the host's network, so it reaches the platform's verify at
+#   localhost:5173 and is itself at localhost:${DEV_API_PORT:-8004}
+#   (EDIARUM_DEV_BACKENDS=index=http://localhost:8004 for the platform)
+# - watcher: ingests from ./xml (one checkout per project slug), or
+#   DEV_XML_DIR
+# - frontend: the bundle at http://localhost:8081 (the platform's dev server
+#   can also serve frontend/dist directly — docs/develop/running.md, "Inside the platform")
+#
+# No platform registry and no fileservice: the project modules are the list,
+# and the watcher computes every project's digest every RECONCILE_INTERVAL.
+# MYSQL_PASSWORD goes into a URL here: keep it to letters and digits locally.
+
+x-dev: &dev
+  network_mode: host
+  networks: !reset {}
+  environment:
+    DATABASE_URL: mysql+pymysql://${MYSQL_USER:-index}:${MYSQL_PASSWORD:-index}@127.0.0.1:${DEV_DB_PORT:-3306}/${MYSQL_DATABASE:-index}?charset=utf8mb4
+    AUTH_VERIFY_URL: http://localhost:5173/api/auth/verify
+    ROOT_PATH: ""
+  volumes: !override
+    - ${DEV_XML_DIR:-./xml}:/data/xml:ro
+    - db_backups:/backups
+
+services:
+  api:
+    <<: *dev
+    command: ["sh", "-c", "exec ediarum-index serve --host 127.0.0.1 --port ${DEV_API_PORT:-8004}"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${DEV_API_PORT:-8004}/openapi.json', timeout=3)"]
+    depends_on:
+      database:
+        condition: service_healthy
+
+  watcher:
+    <<: *dev
+
+  frontend:
+    networks: !reset {}
+    ports:
+      - 127.0.0.1:8081:80
+
+  database:
+    image: mariadb:${MARIADB_VERSION:-11}
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MARIADB_DATABASE: ${MYSQL_DATABASE:-index}
+      MARIADB_USER: ${MYSQL_USER:-index}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD:-index}
+    ports:
+      - 127.0.0.1:${DEV_DB_PORT:-3306}:3306
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+networks:
+  platform: !reset {}
+
+volumes:
+  mariadb_data:
+  xml_data: !reset {}

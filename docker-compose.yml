@@ -1,0 +1,113 @@
+# ediarum.index on ediarum.platform — see docs/operate/deploy.md.
+#
+#   cp .env.example .env    # DATABASE_URL, AUTH_VERIFY_URL, PLATFORM_NETWORK, XML_VOLUME, …
+#   docker compose up -d    # INDEX_VERSION=X.Y.Z for the released images
+#
+# The database is external (a hosted MariaDB): DATABASE_URL, with ?ssl_ca=…
+# for TLS (put the CA certificate in DB_CERTS_DIR, mounted at /certs). No
+# published ports: only the platform's reverse proxy is public. It reaches the
+# services on the platform's Docker network:
+#
+#   location /api/index/  { proxy_pass http://ediarum-index-api:8000/; }
+#   location /apps/index/ { proxy_pass http://ediarum-index-frontend/; }
+#
+# ediarum.webdav posts file changes to http://ediarum-index-api:8000/files on
+# the same network (no public route needed).
+#
+# Mounts (api and watcher):
+# - XML volume → /data/xml  (read-only; ediarum.fileservice's volume XML_VOLUME,
+#   which it keeps in step with webdav and git — this app only reads it)
+# - certs      → /certs     (read-only; the database's CA certificate, if any)
+# - backups    → /backups   (api; the mariadb-dump written before pending
+#   migrations — named volume `db_backups`)
+#
+# Local development with a MariaDB container: docker-compose.dev.yml.
+
+x-common: &common
+  build: .
+  image: ${INDEX_IMAGE:-ediarum-index}:${INDEX_VERSION:-latest}
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: ${DATABASE_URL:-}
+    # the platform auth provider's verify endpoint, as reachable from the container
+    AUTH_VERIFY_URL: ${AUTH_VERIFY_URL:-}
+    # the platform's project registry; empty: the project modules are the list
+    PLATFORM_PROJECTS_URL: ${PLATFORM_PROJECTS_URL:-}
+    PLATFORM_SERVICE_TOKEN: ${PLATFORM_SERVICE_TOKEN:-}
+    # the platform's proxy strips /api/index; needed for /docs
+    ROOT_PATH: /api/index
+    XML_MOUNT_ROOT: /data/xml
+    # ediarum.id: source_ids for entries created in the app (api; empty: none)
+    ID_URL: ${ID_URL:-}
+    ID_KEY: ${ID_KEY:-}
+    # ediarum.fileservice, for its per-project status (watcher only; optional)
+    FILESERVICE_URL: ${FILESERVICE_URL:-}
+    FILESERVICE_KEY: ${FILESERVICE_KEY:-}
+    RECONCILE_INTERVAL: ${RECONCILE_INTERVAL:-300}
+    BACKUP_DIR: /backups
+  volumes:
+    - xml_data:/data/xml:ro
+    - ${DB_CERTS_DIR:-./certs}:/certs:ro
+
+services:
+
+  # HTTP API, incl. POST /files from webdav. On start it migrates the database
+  # (after a backup into /backups if migrations are pending) and syncs the
+  # `project` table from the platform registry. Refuses to start without
+  # DATABASE_URL or AUTH_VERIFY_URL.
+  api:
+    <<: *common
+    command:
+      - sh
+      - -c
+      - >-
+        test -n "$$DATABASE_URL" || { echo "DATABASE_URL is not set (see .env.example)" >&2; exit 1; };
+        test -n "$$AUTH_VERIFY_URL" || { echo "AUTH_VERIFY_URL is not set (see .env.example)" >&2; exit 1; };
+        exec ediarum-index serve --host 0.0.0.0 --port 8000
+    volumes:
+      - xml_data:/data/xml:ro
+      - ${DB_CERTS_DIR:-./certs}:/certs:ro
+      - db_backups:/backups
+    networks:
+      default:
+      platform:
+        aliases: [ediarum-index-api]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Ingests a project whenever its XML on the shared volume changes — and, on
+  # its first start against an empty database, every project (the initial
+  # ingest). See watch.py. Waits for the api, so the two don't migrate the
+  # database at the same time.
+  watcher:
+    <<: *common
+    command: ["ediarum-index", "watch"]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # The UI bundle (embed.js), mounted by the platform at /index/.
+  frontend:
+    build: ./frontend
+    image: ${INDEX_IMAGE:-ediarum-index}/frontend:${INDEX_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      platform:
+        aliases: [ediarum-index-frontend]
+
+networks:
+  platform:
+    # the platform's Docker network; up fails with this name until it is set in .env
+    name: ${PLATFORM_NETWORK:-set-PLATFORM_NETWORK-in-.env}
+    external: true
+
+volumes:
+  db_backups:
+  xml_data:
+    # ediarum.fileservice's volume; up fails with this name until it is set in .env
+    name: ${XML_VOLUME:-set-XML_VOLUME-in-.env}
+    external: true

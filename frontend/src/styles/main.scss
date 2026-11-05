@@ -1,0 +1,66 @@
+@layer vuetify-overrides {
+  /* Layout inside the platform (contract: the root fills `el`, which is the
+     area below the platform's top bar, and scrolls itself — never 100vh or
+     viewport-fixed chrome). The toolbar stays put; the content scrolls. */
+  .index-root,
+  .index-app {
+    height: 100%;
+  }
+  .index-root {
+    position: relative; /* the overlay container's reference */
+    overflow: hidden;
+    font-family: var(--font-body);
+  }
+  .index-shell,
+  .index-shell .v-application__wrap {
+    height: 100%;
+    min-height: 0;
+  }
+  .index-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  code,
+  pre,
+  .v-code {
+    font-family: var(--font-mono);
+  }
+
+  /* the platform's type: one family, no Material letter-spacing on titles */
+  .v-toolbar-title,
+  .v-card-title,
+  .text-h1,
+  .text-h2,
+  .text-h3,
+  .text-h4,
+  .text-h5,
+  .text-h6 {
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+
+  /* The app's own toolbar (App.vue): a light bar with a hairline rule, like
+     the platform's top bar above it; utility classes are disabled
+     (settings.scss $utilities: false), so keep it from wrapping to a second
+     line — clip instead */
+  .index-toolbar.v-toolbar {
+    border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  }
+  .index-toolbar .v-toolbar__content {
+    flex-wrap: nowrap;
+  }
+
+  /* Data tables: quiet header on the platform's surface colour, hairline rows */
+  .v-data-table {
+    --v-table-header-height: 44px;
+  }
+  .v-data-table__th {
+    font-weight: 600 !important;
+    background: rgb(var(--v-theme-surface-light)) !important;
+  }
+  .v-data-table tbody tr:hover > td {
+    background: rgb(var(--v-theme-surface-light));
+  }
+}

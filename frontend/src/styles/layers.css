@@ -1,0 +1,13 @@
+/* The cascade-layer order of the whole app — prepended to the injected CSS by
+   vite.config.mts (cssInjectedByJs), so it is declared before any layer is used. */
+@layer tailwind-theme;
+@layer tailwind-reset;
+
+@layer vuetify-core;
+@layer vuetify-components;
+@layer vuetify-overrides;
+@layer vuetify-utilities;
+
+@layer tailwind-utilities;
+
+@layer vuetify-final;

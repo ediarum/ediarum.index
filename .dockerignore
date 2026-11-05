@@ -1,0 +1,11 @@
+# For the Dockerfile: only this repository's package goes in. Project XML
+# data and the database are mounted at runtime, never copied into the image.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src
+**/__pycache__
+**/*.py[oc]
+**/xml-data
